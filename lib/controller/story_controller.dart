@@ -12,9 +12,6 @@ class StoryController {
   /// Stream that broadcasts the playback state of the stories.
   final playbackNotifier = BehaviorSubject<PlaybackState>();
 
-  /// Callback to remove the current story. Should be set by StoryViewState.
-  VoidCallback? removeCurrentStoryCallback;
-
   /// Notify listeners with a [PlaybackState.pause] state
   void pause() {
     playbackNotifier.add(PlaybackState.pause);
