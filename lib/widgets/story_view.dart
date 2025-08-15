@@ -456,12 +456,13 @@ class StoryViewState extends State<StoryView> with TickerProviderStateMixin {
   void removeCurrentStory() {
     final currentStory = _currentStory;
     if (currentStory == null) return;
-    // If only one story remains, just complete playback
+    // If only one story remains, just complete playback and do not remove
     if (widget.storyItems.length == 1) {
       _onComplete();
       return;
     }
     final currentIndex = widget.storyItems.indexOf(currentStory);
+    final wasLastStory = (currentIndex == widget.storyItems.length - 1);
     setState(() {
       widget.storyItems.removeAt(currentIndex);
     });
@@ -470,9 +471,10 @@ class StoryViewState extends State<StoryView> with TickerProviderStateMixin {
       _animationController?.stop();
       return;
     }
-    // If we removed the last story, play the new last story
-    if (currentIndex >= widget.storyItems.length) {
-      widget.storyItems.last!.shown = false;
+    // If we just removed the last story, call onComplete
+    if (wasLastStory) {
+      _onComplete();
+      return;
     }
     // Reset all stories after the removed index to not shown
     for (int i = currentIndex; i < widget.storyItems.length; i++) {
@@ -531,10 +533,10 @@ class StoryViewState extends State<StoryView> with TickerProviderStateMixin {
           _removeNextHold();
           _goBack();
           break;
-          // Support removal via playbackNotifier
-          case PlaybackState.remove:
-            removeCurrentStory();
-            break;
+        // Support removal via playbackNotifier
+        case PlaybackState.remove:
+          removeCurrentStory();
+          break;
       }
     });
 
