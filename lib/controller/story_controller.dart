@@ -1,6 +1,7 @@
 import 'package:rxdart/rxdart.dart';
+import 'package:flutter/foundation.dart';
 
-enum PlaybackState { pause, play, next, previous }
+enum PlaybackState { pause, play, next, previous, remove }
 
 /// Controller to sync playback between animated child (story) views. This
 /// helps make sure when stories are paused, the animation (gifs/slides) are
@@ -10,6 +11,9 @@ enum PlaybackState { pause, play, next, previous }
 class StoryController {
   /// Stream that broadcasts the playback state of the stories.
   final playbackNotifier = BehaviorSubject<PlaybackState>();
+
+  /// Callback to remove the current story. Should be set by StoryViewState.
+  VoidCallback? removeCurrentStoryCallback;
 
   /// Notify listeners with a [PlaybackState.pause] state
   void pause() {
@@ -27,6 +31,11 @@ class StoryController {
 
   void previous() {
     playbackNotifier.add(PlaybackState.previous);
+  }
+
+  /// Call this to remove the current story from the StoryView.
+  void removeCurrentStory() {
+    playbackNotifier.add(PlaybackState.remove);
   }
 
   /// Remember to call dispose when the story screen is disposed to close

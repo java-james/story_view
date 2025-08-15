@@ -79,10 +79,11 @@ class StoryItem {
             bottom: Radius.circular(roundedBottom ? 8 : 0),
           ),
         ),
-        padding: textOuterPadding?? EdgeInsets.symmetric(
-          horizontal: 24,
-          vertical: 16,
-        ),
+        padding: textOuterPadding ??
+            EdgeInsets.symmetric(
+              horizontal: 24,
+              vertical: 16,
+            ),
         child: Center(
           child: Text(
             title,
@@ -140,12 +141,13 @@ class StoryItem {
                   margin: EdgeInsets.only(
                     bottom: 24,
                   ),
-                  padding: captionOuterPadding?? EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 8,
-                  ),
+                  padding: captionOuterPadding ??
+                      EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 8,
+                      ),
                   color: caption != null ? Colors.black54 : Colors.transparent,
-                  child: caption?? const SizedBox.shrink(),
+                  child: caption ?? const SizedBox.shrink(),
                 ),
               ),
             )
@@ -193,11 +195,12 @@ class StoryItem {
                 ),
                 Container(
                   margin: EdgeInsets.only(bottom: 16),
-                  padding: captionOuterPadding?? EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  padding: captionOuterPadding ??
+                      EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                   child: Align(
                     alignment: Alignment.bottomLeft,
                     child: Container(
-                      child: caption?? const SizedBox.shrink(),
+                      child: caption ?? const SizedBox.shrink(),
                       width: double.infinity,
                     ),
                   ),
@@ -252,7 +255,7 @@ class StoryItem {
                     padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                     color:
                         caption != null ? Colors.black54 : Colors.transparent,
-                    child: caption?? const SizedBox.shrink(),
+                    child: caption ?? const SizedBox.shrink(),
                   ),
                 ),
               )
@@ -406,6 +409,7 @@ class StoryView extends StatefulWidget {
 
   /// Indicator Color
   final Color? indicatorColor;
+
   /// Indicator Foreground Color
   final Color? indicatorForegroundColor;
 
@@ -427,7 +431,10 @@ class StoryView extends StatefulWidget {
     this.indicatorColor,
     this.indicatorForegroundColor,
     this.indicatorHeight = IndicatorHeight.large,
-    this.indicatorOuterPadding = const EdgeInsets.symmetric(horizontal: 16, vertical: 8,),
+    this.indicatorOuterPadding = const EdgeInsets.symmetric(
+      horizontal: 16,
+      vertical: 8,
+    ),
   });
 
   @override
@@ -444,6 +451,35 @@ class StoryViewState extends State<StoryView> with TickerProviderStateMixin {
   StreamSubscription<PlaybackState>? _playbackSubscription;
 
   VerticalDragInfo? verticalDragInfo;
+
+  /// Removes the current story from the list and resets playback to the next story.
+  void removeCurrentStory() {
+    final currentStory = _currentStory;
+    if (currentStory == null) return;
+    // If only one story remains, just complete playback
+    if (widget.storyItems.length == 1) {
+      _onComplete();
+      return;
+    }
+    final currentIndex = widget.storyItems.indexOf(currentStory);
+    setState(() {
+      widget.storyItems.removeAt(currentIndex);
+    });
+    // If there are no stories left, just stop playback
+    if (widget.storyItems.isEmpty) {
+      _animationController?.stop();
+      return;
+    }
+    // If we removed the last story, play the new last story
+    if (currentIndex >= widget.storyItems.length) {
+      widget.storyItems.last!.shown = false;
+    }
+    // Reset all stories after the removed index to not shown
+    for (int i = currentIndex; i < widget.storyItems.length; i++) {
+      widget.storyItems[i]!.shown = false;
+    }
+    _beginPlay();
+  }
 
   StoryItem? get _currentStory {
     return widget.storyItems.firstWhereOrNull((it) => !it!.shown);
@@ -495,6 +531,10 @@ class StoryViewState extends State<StoryView> with TickerProviderStateMixin {
           _removeNextHold();
           _goBack();
           break;
+          // Support removal via playbackNotifier
+          case PlaybackState.remove:
+            removeCurrentStory();
+            break;
       }
     });
 
@@ -796,8 +836,11 @@ class PageBarState extends State<PageBar> {
                 right: widget.pages.last == it ? 0 : this.spacing),
             child: StoryProgressIndicator(
               isPlaying(it) ? widget.animation!.value : (it.shown ? 1 : 0),
-              indicatorHeight:
-                  widget.indicatorHeight == IndicatorHeight.large ? 5 : widget.indicatorHeight == IndicatorHeight.medium ? 3 : 2,
+              indicatorHeight: widget.indicatorHeight == IndicatorHeight.large
+                  ? 5
+                  : widget.indicatorHeight == IndicatorHeight.medium
+                      ? 3
+                      : 2,
               indicatorColor: widget.indicatorColor,
               indicatorForegroundColor: widget.indicatorForegroundColor,
             ),
@@ -831,11 +874,11 @@ class StoryProgressIndicator extends StatelessWidget {
         this.indicatorHeight,
       ),
       foregroundPainter: IndicatorOval(
-        this.indicatorForegroundColor?? Colors.white.withValues(alpha: 0.8),
+        this.indicatorForegroundColor ?? Colors.white.withValues(alpha: 0.8),
         this.value,
       ),
       painter: IndicatorOval(
-        this.indicatorColor?? Colors.white.withValues(alpha: 0.4),
+        this.indicatorColor ?? Colors.white.withValues(alpha: 0.4),
         1.0,
       ),
     );
